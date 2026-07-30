@@ -40,24 +40,34 @@ def add_patient():
             "message": "No data provided"
         }), 400
 
-    if "name" not in data:
+    if "name" not in data or "age" not in data or "cholesterol" not in data:
         return jsonify({
-            "message": "Name is required"
-        }), 400
-
-    if "age" not in data:
-        return jsonify({
-            "message": "Age is required"
-        }), 400
-
-    if "cholesterol" not in data:
-        return jsonify({
-            "message": "Cholesterol is required"
+            "message": "Name, age and cholesterol are required"
         }), 400
 
     name = data["name"]
     age = data["age"]
     cholesterol = data["cholesterol"]
+
+    if not isinstance(name, str):
+        return jsonify({
+            "message": "Name must be text"
+        }), 400
+
+    if not isinstance(age, int):
+        return jsonify({
+            "message": "Age must be an integer"
+        }), 400
+
+    if not isinstance(cholesterol, (int, float)):
+        return jsonify({
+            "message": "Cholesterol must be a number"
+        }), 400
+
+    if age <= 0:
+        return jsonify({
+            "message": "Age must be greater than 0"
+        }), 400
 
     connection = get_db_connection()
     cursor = connection.cursor()
