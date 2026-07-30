@@ -7,28 +7,41 @@ app = Flask(__name__)
 @app.route("/patients", methods=["GET"])
 def get_patients():
 
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
 
-    cursor.execute("SELECT * FROM patients ORDER BY id")
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
 
-    patients = cursor.fetchall()
+        cursor.execute("SELECT * FROM patients ORDER BY id")
 
-    cursor.close()
-    connection.close()
+        patients = cursor.fetchall()
 
-    result = []
+        result = []
 
-    for patient in patients:
-        result.append({
-            "id": patient[0],
-            "name": patient[1],
-            "age": patient[2],
-            "cholesterol": patient[3]
-        })
+        for patient in patients:
+            result.append({
+                "id": patient[0],
+                "name": patient[1],
+                "age": patient[2],
+                "cholesterol": patient[3]
+            })
 
-    return jsonify(result), 200
+        return jsonify(result), 200
 
+    except Exception as error:
+        return jsonify({
+            "message": "Something went wrong",
+            "error": str(error)
+        }), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()
 
 @app.route("/patients", methods=["POST"])
 def add_patient():
