@@ -18,6 +18,7 @@ def get_all_patients():
     return patients
 
 
+
 def get_patient_by_id(patient_id):
 
     connection = get_db_connection()
