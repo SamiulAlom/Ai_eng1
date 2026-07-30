@@ -1,54 +1,36 @@
-# import psycopg2
-#
-#
-# connection = psycopg2.connect(
-#     host="localhost",
-#     database="ai_engineering",
-#     user="postgres",
-#     password="",
-#     port="5432"
-# )
-#
-# print("Database connected successfully!")
-#
-# connection.close()
-
+import os
 
 import psycopg2
+from dotenv import load_dotenv
 
 
-connection = psycopg2.connect(
-    host="localhost",
-    database="ai_engineering",
-    user="postgres",
-    password="",
-    port="5432"
-)
+load_dotenv()
 
-cursor = connection.cursor()
 
-cursor.execute("SELECT * FROM patients")
+def get_db_connection():
+    required_variables = [
+        "DB_HOST",
+        "DB_NAME",
+        "DB_USER",
+        "DB_PASSWORD",
+        "DB_PORT"
+    ]
 
-patients = cursor.fetchall()
+    missing_variables = [
+        variable
+        for variable in required_variables
+        if not os.getenv(variable)
+    ]
 
-for patient in patients:
-    print(patient)
+    if missing_variables:
+        raise ValueError(
+            f"Missing environment variables: {', '.join(missing_variables)}"
+        )
 
-# cursor.execute(
-#     """
-#     INSERT INTO patients (name, age, cholesterol)
-#     VALUES (%s, %s, %s)
-#     """,
-#     ("Rahim", 60, 320)
-# )
-#
-# connection.commit()
-#
-# print("Patient inserted successfully!")
-
-# patients = cursor.fetchall()
-# for patient in patients:
-#     print(patient)
-
-cursor.close()
-connection.close()
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        database=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        port=os.getenv("DB_PORT")
+    )
