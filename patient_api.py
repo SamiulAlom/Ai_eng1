@@ -46,65 +46,84 @@ def get_patients():
 @app.route("/patients", methods=["POST"])
 def add_patient():
 
-    data = request.get_json()
+    connection = None
+    cursor = None
 
-    if not data:
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                "message": "No data provided"
+            }), 400
+
+        if "name" not in data or "age" not in data or "cholesterol" not in data:
+            return jsonify({
+                "message": "Name, age and cholesterol are required"
+            }), 400
+
+        name = data["name"]
+        age = data["age"]
+        cholesterol = data["cholesterol"]
+
+        if not isinstance(name, str):
+            return jsonify({
+                "message": "Name must be text"
+            }), 400
+
+        if not isinstance(age, int):
+            return jsonify({
+                "message": "Age must be an integer"
+            }), 400
+
+        if not isinstance(cholesterol, (int, float)):
+            return jsonify({
+                "message": "Cholesterol must be a number"
+            }), 400
+
+        if age <= 0:
+            return jsonify({
+                "message": "Age must be greater than 0"
+            }), 400
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO patients (name, age, cholesterol)
+            VALUES (%s, %s, %s)
+            RETURNING id
+            """,
+            (name, age, cholesterol)
+        )
+
+        new_id = cursor.fetchone()[0]
+
+        connection.commit()
+
         return jsonify({
-            "message": "No data provided"
-        }), 400
+            "message": "Patient added successfully",
+            "id": new_id
+        }), 201
 
-    if "name" not in data or "age" not in data or "cholesterol" not in data:
+    except Exception as error:
+
+        if connection:
+            connection.rollback()
+
         return jsonify({
-            "message": "Name, age and cholesterol are required"
-        }), 400
+            "message": "Something went wrong",
+            "error": str(error)
+        }), 500
 
-    name = data["name"]
-    age = data["age"]
-    cholesterol = data["cholesterol"]
+    finally:
 
-    if not isinstance(name, str):
-        return jsonify({
-            "message": "Name must be text"
-        }), 400
+        if cursor:
+            cursor.close()
 
-    if not isinstance(age, int):
-        return jsonify({
-            "message": "Age must be an integer"
-        }), 400
-
-    if not isinstance(cholesterol, (int, float)):
-        return jsonify({
-            "message": "Cholesterol must be a number"
-        }), 400
-
-    if age <= 0:
-        return jsonify({
-            "message": "Age must be greater than 0"
-        }), 400
-
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    cursor.execute(
-        """
-        INSERT INTO patients (name, age, cholesterol)
-        VALUES (%s, %s, %s)
-        RETURNING id
-        """,
-        (name, age, cholesterol)
-    )
-
-    new_id = cursor.fetchone()[0]
-
-    connection.commit()
-
-    cursor.close()
-    connection.close()
-
-    return jsonify({
-        "message": "Patient added successfully",
-        "id": new_id
-    }), 201
+        if connection:
+            connection.close()
 
 
 @app.route("/patients/<int:id>", methods=["PUT"])
