@@ -35,6 +35,26 @@ def add_patient():
 
     data = request.get_json()
 
+    if not data:
+        return jsonify({
+            "message": "No data provided"
+        }), 400
+
+    if "name" not in data:
+        return jsonify({
+            "message": "Name is required"
+        }), 400
+
+    if "age" not in data:
+        return jsonify({
+            "message": "Age is required"
+        }), 400
+
+    if "cholesterol" not in data:
+        return jsonify({
+            "message": "Cholesterol is required"
+        }), 400
+
     name = data["name"]
     age = data["age"]
     cholesterol = data["cholesterol"]
@@ -60,10 +80,7 @@ def add_patient():
 
     return jsonify({
         "message": "Patient added successfully",
-        "id": new_id,
-        "name": name,
-        "age": age,
-        "cholesterol": cholesterol
+        "id": new_id
     }), 201
 
 
@@ -122,7 +139,35 @@ def delete_patient(id):
     }), 200
 
 
+@app.route("/patients/<int:id>", methods=["GET"])
+def get_patient(id):
 
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    cursor.execute(
+        "SELECT * FROM patients WHERE id = %s",
+        (id,)
+    )
+
+    patient = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if patient is None:
+        return jsonify({
+            "message": "Patient not found"
+        }), 404
+
+    result = {
+        "id": patient[0],
+        "name": patient[1],
+        "age": patient[2],
+        "cholesterol": patient[3]
+    }
+
+    return jsonify(result), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
